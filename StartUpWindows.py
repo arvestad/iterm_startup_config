@@ -21,21 +21,23 @@ async def main(connection):
     # Your code goes here. Here's a bit of example code that adds a tab to the current window:
     app = await iterm2.async_get_app(connection)
     window = app.current_terminal_window
-    if window is not None:
-        await window.async_create_tab()
-    else:
+    if window is None:
         # You can view this message in the script console.
         print("No current window")
+    else:
+        filename = user_file(setup_file)
+        with open(filename) as h:
+            user_setup = json.load(h)
 
-    filename = user_file(setup_file)
-    with open(filename) as h:
-        user_setup = json.load(h)
+        for title, directory in user_setup:
+            window = await iterm2.Window.async_create(connection)
 
-    for title, directory in user_setup:
-        await window.async_create_tab()
-        tab = app.current_terminal_window.current_tab
-        session = tab.current_session
-        await session.async_send_text(f'cd {directory}\n')
-        await tab.async_set_title(title)
+            tab = app.current_terminal_window.current_tab
+            session = tab.current_session
+            await session.async_send_text(f'cd {directory}\n')
+            await session.async_set_name(title)
+#            await session.async_send_text(f'title {title}\n')
+
+            await tab.async_set_title(title)
     
 iterm2.run_until_complete(main)
